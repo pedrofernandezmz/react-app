@@ -1,0 +1,30 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Cambia "main" por la rama en la que deseas que se ejecute el workflow.
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código fuente
+        uses: actions/checkout@v2
+
+      - name: Configurar Docker Buildx
+        run: |
+          docker buildx create --use
+          docker buildx inspect default --bootstrap
+
+      - name: Autenticar en DockerHub
+        run: echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+      - name: Construir imagen de Docker
+        run: |
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/my-react-app:latest \
+            .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-react-app:latest
